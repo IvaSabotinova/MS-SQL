@@ -132,8 +132,29 @@ SELECT [Name]
 ,PhoneNumber
 --, SUBSTRING([Address], PATINDEX('%[0-9]%', [Address]), LEN([Address])) AS [Address]
 , SUBSTRING([Address], CHARINDEX(',', [Address], 1 )+1, LEN([Address])) AS [Address]
+--, SUBSTRING([Address], CHARINDEX(',', [Address], 1 )+1, LEN([Address]) - CHARINDEX(',', [Address], 1 )) AS [Address]
 FROM Volunteers
 WHERE DepartmentId = 2 AND CHARINDEX('Sofia', [Address],1) <>0
+ORDER BY [Name]
+
+--ANOTHER SOLUTION
+
+SELECT [Name] 
+, PhoneNumber
+, TRIM(', Sofia' FROM [Address]) AS [Address]
+FROM Volunteers
+WHERE DepartmentId = 2 AND CHARINDEX ('Sofia', [Address], 1) <>0
+ORDER BY [Name]
+
+--ANOTHER SOLUTION
+
+SELECT [Name] 
+, PhoneNumber
+, CASE WHEN CHARINDEX ('Sofia,', [Address], 1) <> 0 THEN REPLACE([Address], 'Sofia, ', '')
+ELSE LTRIM(REPLACE([Address], 'Sofia ,',''))
+END AS [Address]
+FROM Volunteers
+WHERE DepartmentId = 2 AND CHARINDEX ('Sofia', [Address], 1) <>0
 ORDER BY [Name]
 
 --T10 Animals for Adoption
