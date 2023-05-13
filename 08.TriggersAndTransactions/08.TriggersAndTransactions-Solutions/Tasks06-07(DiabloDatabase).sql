@@ -253,6 +253,48 @@ WHERE UserGameId = @StamatSafflowerUserGameIdNew
 ORDER BY i.[Name]
 
 
+--ANOTHER SOLUTION WITH PROCEDURE
+
+SELECT * FROM Users
+WHERE Username = 'Stamat' -- Id 9
+
+SELECT * From Games
+WHERE [Name] = 'Safflower' -- Id 87
+
+SELECT Cash FROM UsersGames
+WHERE UserId = 9 AND GameId = 87 -- Cash 6266
+
+CREATE OR ALTER PROCEDURE usp_MassiveShopping(@LevelLow INT, @LevelHigh INT)
+AS
+BEGIN TRANSACTION
+DECLARE @CurrentUserCash MONEY = (SELECT Cash FROM UsersGames WHERE UserId = 9 AND GameId = 87)
+DECLARE @ItemsPrice MONEY = (SELECT SUM(Price) FROM Items WHERE MinLevel BETWEEN @LevelLow AND @LevelHigh)
+IF @CurrentUserCash < @ItemsPrice
+BEGIN
+ROLLBACK;
+THROW 50001, 'Insufficient Cash',1
+END
+
+UPDATE UsersGames
+SET Cash -= @ItemsPrice
+WHERE UserId = 9 AND GameId = 87
+
+DECLARE @UserGameId INT = (SELECT Id FROM UsersGames WHERE UserId = 9 AND GameId = 87)
+
+INSERT INTO UserGameItems (ItemId, UserGameId)
+SELECT Id, @UserGameId FROM Items WHERE MinLevel BETWEEN @LevelLow AND @LevelHigh
+COMMIT
+
+EXEC usp_MassiveShopping 11, 12
+EXEC usp_MassiveShopping 19, 21
+
+SELECT i.[Name] as [Item Name] FROM UsersGames AS ug
+JOIN UserGameItems AS uga ON uga.UserGameId = ug.Id
+JOIN Items AS i ON i.Id = uga.ItemId
+WHERE ug.UserId = 9 and ug.GameId = 87
+ORDER BY i.Name
+
+
 
 
 
